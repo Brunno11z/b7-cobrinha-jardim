@@ -1,0 +1,219 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>B7 • Painel Cobrinha Jardim</title><style>
+body{background:#100f18;color:#eee;font:16px system-ui,-apple-system,BlinkMacSystemFont,sans-serif;max-width:1050px;margin:25px auto;padding:15px}
+h1,b{color:#38bdf8}h2{color:#34d399;margin-top:0}
+section{background:#1e1a29;padding:22px;border-radius:18px;margin:18px 0;border:1px solid #332b45;box-shadow:0 4px 20px rgba(0,0,0,0.25)}
+input,select,button{padding:10px 12px;background:#2d253b;color:white;border:1px solid #5a4b6e;border-radius:8px;margin:5px;max-width:90%}
+input:focus,select:focus{border-color:#38bdf8;outline:none}
+button{background:#2563eb;font-weight:600;cursor:pointer;border:none;transition:0.15s ease}
+button:hover{background:#1d4ed8;transform:translateY(-1px)}
+button.danger{background:#dc2626}button.danger:hover{background:#b91c1c}
+button.success{background:#059669}button.success:hover{background:#047857}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;text-align:left;border-bottom:1px solid #2d253b}
+td input{width:115px}label{display:inline-block;margin:6px 10px 6px 0}
+#msg{position:sticky;top:10px;background:#2563eb;color:white;padding:12px 18px;border-radius:10px;font-weight:600;z-index:99;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
+pre{background:#120f1c;padding:12px;border-radius:8px;white-space:pre-wrap;border:1px solid #2d253b;max-height:220px;overflow:auto}
+.help{color:#94a3b8;font-size:14px;margin-top:8px}
+.pill{display:inline-block;padding:4px 10px;border-radius:12px;background:#3b82f6;font-size:12px;font-weight:600;margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+</style></head><body>
+<h1>🐍 B7 • COBRINHA JARDIM 3D</h1><p>Central de presentes, inteligência artificial Groq, efeitos sonoros e controle da live.</p>
+<div id="msg">Carregando painel…</div>
+
+<section>
+<h2>⚙️ Configurações da Rodada & Áudio</h2>
+<div id="stats" style="font-size:20px;font-weight:700;color:#facc15;margin-bottom:8px"></div>
+<p id="connection" style="font-weight:600;color:#38bdf8"></p>
+<div class="grid">
+  <label>Meta de Maçãs <input id="goal" type="number" min="1" value="100"></label>
+  <label>Velocidade <input id="speed" type="number" step=".1" min=".2" max="10" value="2.5"></label>
+  <label style="align-self:center"><input id="sound" type="checkbox" checked> <b>Som ao comer maçãs e efeitos</b></label>
+  <label style="align-self:center"><input id="voice" type="checkbox" checked> <b>Voz (TTS) ao responder</b></label>
+</div>
+<p>
+  <button class="success" onclick="post('/api/test-sound',{sound:'eat_apple'})">🔊 Testar Som Maçã</button>
+  <button class="success" onclick="post('/api/test-sound',{sound:'bomb'})">💥 Testar Bomba</button>
+  <button class="success" onclick="post('/api/test-sound',{sound:'victory'})">🏆 Testar Vitória</button>
+  <button class="danger" onclick="post('/api/reset',{})" style="float:right">Zerar rodada</button>
+</p>
+</section>
+
+<section>
+<h2>⚡ Inteligência Artificial (Groq / Grok)</h2>
+<p>A API Groq responde em milissegundos nas lives. Obtenha sua chave gratuita em <a href="https://console.groq.com/keys" target="_blank" style="color:#38bdf8">console.groq.com/keys</a>.</p>
+<div class="grid">
+  <label>Provedor IA 
+    <select id="ai_provider">
+      <option value="groq">Groq (Llama 3.3 70B - Ultra Rápido)</option>
+      <option value="xai">xAI (Grok)</option>
+    </select>
+  </label>
+  <label>Modelo <input id="model" placeholder="llama-3.3-70b-versatile"></label>
+  <label style="grid-column:1/-1">Chave Groq API (GROQ_API_KEY) <input id="groq_api_key" type="password" placeholder="gsk_..." style="width:100%"></label>
+  <label style="grid-column:1/-1">Chave xAI / Grok API (opcional) <input id="xai_api_key" type="password" placeholder="xai-..." style="width:100%"></label>
+</div>
+<p><label>@ Perfil do TikTok <input id="username" placeholder="@seuperfil"></label></p>
+<p class="help">Você também pode configurar suas chaves em <code>CHAVE_GROQ_LOCAL.bat</code> na pasta do jogo. Salve e reinicie o jogo ao alterar o perfil do TikTok.</p>
+<button class="success" onclick="save()">💾 Salvar Configurações</button>
+</section>
+
+<section>
+<h2>🎁 Presentes da Live</h2>
+<p>Cadastre os IDs reais dos presentes da sua live do TikTok. Fotos PNG/JPG/WebP podem ser adicionadas do computador.</p>
+<div style="overflow:auto">
+<table>
+<thead><tr><th>ID Presente</th><th>Nome</th><th>Efeito</th><th>Quantidade</th><th>Foto</th><th>Ações</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<p><button onclick="add()">+ Adicionar Presente</button> <button class="success" onclick="save()">💾 Salvar Presentes</button></p>
+</section>
+
+<section>
+<h2>🧪 Teste de Interação</h2>
+<div class="grid">
+  <label>Nome do Usuário <input id="user" value="Bruno"></label>
+  <label>Foto do Usuário (URL HTTPS) <input id="avatar" placeholder="https://..."></label>
+</div>
+<p>
+  <select id="testgift"></select>
+  <input id="count" type="number" min="1" max="10000" value="1" style="width:80px">
+  <button class="success" onclick="testGift()">🍎 Enviar Presente Teste</button>
+</p>
+<p>
+  <input id="comment" value="Oi cobrinha, manda um salve!" style="width:60%">
+  <button onclick="post('/api/event',{type:'comment',user:val('user'),comment:val('comment'),avatar:val('avatar')})">💬 Enviar Comentário</button>
+</p>
+<h3>Última fala da cobrinha:</h3>
+<p id="speech" style="font-size:18px;color:#a7f3d0;font-weight:600"></p>
+<h3>Histórico de presentes:</h3>
+<pre id="log"></pre>
+</section>
+
+<script>
+let config;
+const val = id => document.getElementById(id).value;
+const msg = t => { const m = document.getElementById('msg'); m.textContent = t; m.style.display = 'block'; };
+
+async function post(url, data){
+  try {
+    let r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    let d = await r.json();
+    if(!r.ok) throw Error(d.error);
+    msg('Ação executada com sucesso!');
+    setTimeout(() => { document.getElementById('msg').style.display = 'none'; }, 2200);
+    return d;
+  } catch(e){
+    msg('Erro: ' + e.message);
+    throw e;
+  }
+}
+
+function cellInput(tr, value, type='text'){
+  let td = tr.insertCell(), i = document.createElement('input');
+  i.type = type; i.value = value; td.append(i); return i;
+}
+
+function add(g = {id:'', name:'Novo presente', kind:'apple', amount:1, image:''}){
+  let tr = document.getElementById('rows').insertRow();
+  tr.dataset.image = g.image || '';
+  cellInput(tr, g.id);
+  cellInput(tr, g.name);
+  let td = tr.insertCell(), s = document.createElement('select');
+  for(let [v, t] of [['apple', 'Maçãs'], ['bomb', 'Bomba']]){
+    s.add(new Option(t, v));
+  }
+  s.value = g.kind;
+  td.append(s);
+  cellInput(tr, g.amount, 'number');
+  
+  let file = document.createElement('input');
+  file.type = 'file'; file.accept = 'image/*';
+  file.onchange = async () => {
+    let f = file.files[0]; if(!f) return;
+    if(f.size > 3000000) return msg('Escolha imagem até 3 MB');
+    let reader = new FileReader();
+    reader.onload = async () => {
+      let d = await post('/api/upload', {data: reader.result.split(',')[1]});
+      tr.dataset.image = d.path;
+      msg('Foto adicionada! Salve os presentes para confirmar.');
+    };
+    reader.readAsDataURL(f);
+  };
+  tr.insertCell().append(file);
+  
+  let b = document.createElement('button');
+  b.className = 'danger';
+  b.textContent = 'Excluir';
+  b.onclick = () => tr.remove();
+  tr.insertCell().append(b);
+}
+
+async function save(){
+  let c = {
+    ...config,
+    goal: +val('goal'),
+    speed: +val('speed'),
+    sound: document.getElementById('sound').checked,
+    voice: document.getElementById('voice').checked,
+    ai_provider: val('ai_provider'),
+    model: val('model'),
+    groq_api_key: val('groq_api_key'),
+    xai_api_key: val('xai_api_key'),
+    username: val('username'),
+    gifts: [...document.querySelectorAll('#rows tr')].map(tr => {
+      let i = tr.querySelectorAll('input');
+      return {
+        id: i[0].value,
+        name: i[1].value,
+        kind: tr.querySelector('select').value,
+        amount: +i[2].value,
+        image: tr.dataset.image
+      };
+    })
+  };
+  await post('/api/config', c);
+  config = c;
+  options();
+}
+
+function options(){
+  let s = document.getElementById('testgift');
+  s.replaceChildren();
+  for(let g of (config.gifts || [])){
+    s.add(new Option(g.name + ' (' + g.id + ') - ' + (g.kind === 'apple' ? 'Maçãs' : 'Bomba'), g.id));
+  }
+}
+
+function testGift(){
+  post('/api/event', {type:'gift', gift_id:val('testgift'), count:+val('count'), user:val('user'), avatar:val('avatar')});
+}
+
+async function refresh(){
+  try {
+    let d = await(await fetch('/api/state')).json();
+    if(!config){
+      config = d.config;
+      for(let id of ['goal', 'speed', 'username', 'model', 'groq_api_key', 'xai_api_key']){
+        if(document.getElementById(id) && config[id] !== undefined) document.getElementById(id).value = config[id];
+      }
+      if(config.ai_provider) document.getElementById('ai_provider').value = config.ai_provider;
+      document.getElementById('voice').checked = !!config.voice;
+      document.getElementById('sound').checked = config.sound !== false;
+      (config.gifts || []).forEach(add);
+      options();
+      msg('Painel B7 conectado e pronto!');
+      setTimeout(() => { document.getElementById('msg').style.display = 'none'; }, 2000);
+    }
+    document.getElementById('stats').textContent = d.points + ' / ' + d.goal + ' maçãs • ' + d.wins + ' metas concluídas';
+    document.getElementById('connection').textContent = d.connection;
+    document.getElementById('speech').textContent = d.last;
+    document.getElementById('log').textContent = d.log.join('
+');
+  } catch(e){
+    msg('Jogo desconectado. Abra o jogo para conectar o painel.');
+  }
+}
+refresh();
+setInterval(refresh, 1500);
+</script></body></html>

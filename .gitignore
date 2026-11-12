@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+b7.log
+config.tmp
+CHAVE_GROQ_LOCAL.bat
+CHAVE_GROK_LOCAL.bat
+assets/cache_*.png
+assets/gift_*.png
