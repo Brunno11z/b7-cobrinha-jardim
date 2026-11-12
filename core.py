@@ -27,7 +27,7 @@ class GameState:
         self.events = queue.Queue(500)
         self.output = queue.Queue(100)
         self.lock = threading.RLock()
-        self.last = 'Bem-vindo à B7! Manda uma maçã!'
+        self.last = 'Bem-vindo! Manda uma maçã!'
         self.user = 'B7'
         self.avatar = ''
         self.gift_image = ''
@@ -38,6 +38,16 @@ class GameState:
 
     def submit(self, e):
         self.events.put_nowait(e)
+
+    def reset(self):
+        with self.lock:
+            self.points = 0
+            self.wins = 0
+            self.epoch += 1
+            self.user = 'B7'
+            self.last = 'Rodada reiniciada! Manda maçãs!'
+            self.log.insert(0, "Rodada reiniciada pelo painel")
+            self.log = self.log[:30]
 
     def apply(self, e):
         with self.lock:

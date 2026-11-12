@@ -43,5 +43,13 @@ class Tests(unittest.TestCase):
         c = validate(self.s.config)
         self.assertEqual(c['groq_api_key'], 'gsk_test')
 
+    def test_reset(self):
+        self.gift('5655', 10)
+        self.assertEqual(self.s.points, 10)
+        self.s.reset()
+        self.assertEqual(self.s.points, 0)
+        self.assertEqual(self.s.wins, 0)
+        self.assertEqual(self.s.epoch, 1)
+
 if __name__ == '__main__':
     unittest.main()

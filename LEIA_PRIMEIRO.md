@@ -1,75 +1,43 @@
-# B7 Cobrinha Jardim 3D — Versão 3 (Groq AI, Som & Boca Frontal)
+# 🐍 B7 • Cobrinha Jardim 3D (Versão 3.1)
 
-Jogo Python interativo para lives do TikTok com Ursina/Panda3D, visual 3D low poly e formato vertical 720 × 960 pronto para captura no OBS. A cobrinha azul com barriga verde-clara se movimenta de forma fluida e automática, respondendo em tempo real aos presentes e comentários da live.
-
-## 🚀 Novidades desta Versão
-1. **Inteligência Artificial Groq (Ultra-Rápida)**: Respostas em menos de 300ms na live usando `llama-3.3-70b-versatile` da Groq Cloud. Também suporta xAI Grok.
-2. **Efeitos Sonoros**: Som crocante de mastigar/morder ao comer maçãs (`assets/eat_apple.wav`), som de explosão para bombas (`assets/bomb.wav`) e fanfarra ao completar a meta (`assets/victory.wav`).
-3. **Boca Abrindo de Frente**: Abertura anatômica frontal da mandíbula com cavidade bucal vermelha, presas e língua animada, engolindo as maçãs que voam em direção à boca.
-4. **Movimentos Incríveis & Crescimento na Tela**: A cobrinha cresce exponencialmente à medida que recebe maçãs, estendendo até 240 anéis tubulares e preenchendo quase toda a tela vertical do OBS em curvas sinuosas hipnóticas.
-5. **Nunca Bate Nela Mesma**: A trajetória é uma curva multi-harmônica 3D contínua com desvio vertical suave nos cruzamentos, garantindo que o corpo nunca colida ou trave nele mesmo, ideal para transmissões 24/7 sem interrupções.
+Jogo 3D completo em Python / Ursina para lives do TikTok e OBS Studio (formato vertical 720x960), com movimentação dinâmica de jogador humano, boca 3D articulada que abre de frente, efeitos sonoros crocantes ao comer maçãs, integração com API Groq ultra-rápida e painel web responsivo em tempo real.
 
 ---
 
-## 💻 Como Iniciar no Windows
+## 🚀 Novidades desta Atualização (V3.1)
 
-1. Instale o **Python 3.12 (64 bits)**: [python.org/downloads](https://www.python.org/downloads/). Marque "Add Python to PATH".
-2. Extraia o ZIP para uma pasta no seu computador.
-3. Dê dois cliques em **INSTALAR.bat** (apenas na primeira vez, com internet).
-4. Configure sua chave Groq (veja abaixo) ou use as falas locais automáticas.
-5. Dê dois cliques em **INICIAR.bat**.
-6. O painel abrirá automaticamente em `http://127.0.0.1:8765` (ou pressione `P` no jogo).
-7. No **OBS Studio**, adicione uma fonte de **Captura de Jogo** ou **Captura de Janela** e selecione a janela da B7.
-
----
-
-## 🔑 Configuração da API Groq (Respostas da Cobrinha)
-
-A Groq oferece uma das APIs mais rápidas do mundo, ideal para transmissões ao vivo onde a resposta precisa ser imediata:
-
-1. Crie sua conta gratuita em: https://console.groq.com/
-2. Gere uma chave em **API Keys**: https://console.groq.com/keys
-3. **Método 1 (Automático via BAT)**:
-   - Copie o arquivo `CHAVE_GROQ_EXEMPLO.bat` e renomeie a cópia para `CHAVE_GROQ_LOCAL.bat`.
-   - Abra o arquivo com o Bloco de Notas e troque `gsk_SUA_CHAVE_AQUI` pela sua chave da Groq.
-   - O `INICIAR.bat` carrega automaticamente esse arquivo!
-4. **Método 2 (Pelo Painel Web)**:
-   - No painel `http://127.0.0.1:8765`, selecione o provedor **Groq**, cole sua chave no campo **Chave Groq API** e clique em **Salvar Configurações**.
-
-*Observação*: Se você preferir usar o xAI Grok, basta selecionar xAI no painel ou preencher o `CHAVE_GROK_LOCAL.bat`. Se nenhuma chave estiver configurada, a cobrinha usa frases prontas locais divertidas sem custo.
+1. **Painel Web 100% Responsivo e Sincronizado**:
+   - Correção total de comunicação CORS e JavaScript no `panel.html`.
+   - Botões de **Enviar Presente**, **Enviar Comentário**, **Testar Sons** e **Zerar Rodada** respondem instantaneamente no jogo.
+2. **HUD Limpo sem Texto no Topo**:
+   - Removido o texto "B7 | COBRINHA JARDIM" do topo para deixar a captura do OBS e live muito mais limpa e profissional.
+   - Barra de pontuação com maçãs atuais, meta e vitórias mantida com destaque discreto e elegante.
+3. **Movimentos como se Fosse Alguém Jogando**:
+   - A cobrinha agora caça ativamente maçãs espalhadas pelo jardim 3D.
+   - Curvas dinâmicas com inércia, ondulação serpenteante lateral e desvio inteligente das cercas.
+   - **Nunca bate nela mesma**: algoritmo de evasão ativa do próprio corpo e elevação em camadas verticais nos cruzamentos, garantindo 100% de fluidez contínua sem game-over ou travamentos na live.
+4. **Boca Articulada que Abre de Frente**:
+   - Ao se aproximar das maçãs ou mastigar presentes, a mandíbula inferior desce e gira para frente, revelando a cavidade interna vermelha, presas brancas e língua bifurcada animada.
+5. **Corpo que Preenche a Tela**:
+   - O corpo tubular 3D é reconstruído continuamente a partir da trajetória percorrida pelo jogador e cresce de 3.6 até mais de 30 unidades de comprimento conforme acumula maçãs, preenchendo quase toda a tela vertical do OBS.
+6. **Efeitos Sonoros Nativos**:
+   - Sons WAV inclusos: mordida crocante de maçã (`eat_apple.wav`), explosão de bomba (`bomb.wav`) e fanfarra de vitória (`victory.wav`).
 
 ---
 
-## 🎵 Efeitos Sonoros e Áudio
+## ⚡ Como Rodar o Jogo
 
-- O jogo vem com sons WAV gerados procedurais na pasta `assets/`:
-  - `eat_apple.wav`: som de mordida/crocância de maçã.
-  - `bomb.wav`: estrondo de bomba.
-  - `victory.wav`: toque festivo de vitória de meta.
-- No painel, você pode testar cada som individualmente com os botões **Testar Som Maçã**, **Testar Bomba** e **Testar Vitória**.
-- Você pode desativar ou ativar os sons a qualquer momento desmarcando a opção no painel.
-- As falas da IA são narradas pelo sintetizador local de voz do Windows (pyttsx3).
+1. Abra a pasta do jogo.
+2. Se for a primeira vez, dê dois cliques em **`INSTALAR.bat`**.
+3. (Opcional) Edite **`CHAVE_GROQ_LOCAL.bat`** e insira sua chave da Groq (`gsk_...`). Você também pode colocar a chave diretamente no painel web.
+4. Dê dois cliques em **`INICIAR.bat`** para abrir o jogo e o painel web.
+5. No navegador, acesse **`http://localhost:8765`** para controlar tudo.
 
 ---
 
-## 🎁 Configuração de Presentes do TikTok
-
-1. No painel web (`http://127.0.0.1:8765`), cadastre o ID do presente da sua live (ex: Rosa = 5655).
-2. Escolha se o presente dá **Maçãs** (aumenta pontuação e faz o corpo crescer) ou **Bomba** (remove pontos com explosão).
-3. Defina a quantidade de maçãs por unidade e adicione a imagem do presente se desejar.
-4. Clique em **Salvar Presentes**.
-
-### Teclas de atalho para teste (sem live):
-- Tecla `1`: envia o presente de maçã.
-- Tecla `2`: envia o presente de bomba.
-- Tecla `C`: envia um comentário de teste.
-- Tecla `P`: abre o painel no navegador.
-- Tecla `ESC`: fecha o jogo.
-
----
-
-## 📱 Conexão com TikTok LIVE
-
-1. No painel, preencha o seu `@nomedeusuario` no campo do TikTok e salve.
-2. Seu perfil precisa estar **AO VIVO** no TikTok para a biblioteca conectar.
-3. Reinicie o jogo (`INICIAR.bat`). O status da conexão aparecerá no topo do painel.
+## 🎮 Teclas de Atalho no Teclado
+- **1**: Simula recebimento de 1 Maçã (+1).
+- **2**: Simula bomba (-10 maçãs).
+- **C**: Simula comentário de espectador na live.
+- **P**: Abre o painel web de controle no navegador.
+- **ESC**: Fecha o jogo.

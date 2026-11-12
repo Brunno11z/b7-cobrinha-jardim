@@ -1,140 +1,136 @@
-"""Cenário e malha tubular da B7 Cobrinha Jardim, com movimentos incríveis e crescimento dinâmico."""
-import math, random, wave, struct
+"""Jardim 3D otimizado, geração de áudio procedural WAV e malha tubular da cobrinha."""
+import math, os, struct, wave, random
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter
 from ursina import *
 from ursina.shaders import basic_lighting_shader
 
-R = random.Random(77)
+ROOT = Path(__file__).resolve().parent
 
-def generate_sfx(path, sample_rate, duration, generator_func):
-    num_samples = int(sample_rate * duration)
-    with wave.open(str(path), 'w') as wav:
-        wav.setnchannels(1)
-        wav.setsampwidth(2)
-        wav.setframerate(sample_rate)
-        data = bytearray()
-        for i in range(num_samples):
-            t = i / sample_rate
-            val = max(-1.0, min(1.0, generator_func(t, duration)))
-            sample = int(val * 32767)
-            data.extend(struct.pack('<h', sample))
-        wav.writeframes(data)
+def generate_sfx():
+    assets = ROOT / 'assets'
+    assets.mkdir(parents=True, exist_ok=True)
+    rate = 22050
 
-def prepare_assets():
-    assets = Path(__file__).parent / 'assets'
-    assets.mkdir(exist_ok=True)
-    p = assets / 'grass.png'
-    if not p.exists():
-        im = Image.new('RGB', (512, 512))
-        pix = im.load()
-        for y in range(512):
-            for x in range(512):
-                n = R.randint(-9, 9)
-                wave_val = int(5 * math.sin(x / 45) + 4 * math.cos(y / 39))
-                pix[x, y] = (73 + n + wave_val, 137 + n + wave_val, 30 + n // 2)
-        d = ImageDraw.Draw(im)
-        for _ in range(2700):
-            x, y = R.randrange(512), R.randrange(512)
-            d.line((x, y, x + R.randint(-2, 2), y - R.randint(2, 7)), fill=(91, 155 + R.randrange(25), 35), width=1)
-        for _ in range(25):
-            x, y = R.randrange(512), R.randrange(512)
-            for dx, dy in ((-3, 0), (3, 0), (0, 3), (0, -3)):
-                d.ellipse((x + dx - 2, y + dy - 2, x + dx + 2, y + dy + 2), fill=(230, 234, 158))
-            d.ellipse((x - 1, y - 1, x + 1, y + 1), fill=(245, 187, 35))
-        im.save(p)
+    # 1. Som de comer maçã (mordida crocante com estalo e ressonância doce)
+    eat_path = assets / 'eat_apple.wav'
+    if not eat_path.exists() or eat_path.stat().st_size < 1000:
+        samples = []
+        dur = 0.28
+        total = int(rate * dur)
+        for i in range(total):
+            t = i / rate
+            env = math.exp(-t * 22.0)
+            crunch = (random.random() * 2.0 - 1.0) * math.exp(-t * 35.0)
+            tone1 = math.sin(2.0 * math.pi * 580.0 * t) * math.exp(-t * 18.0)
+            tone2 = math.sin(2.0 * math.pi * 880.0 * t) * math.exp(-t * 24.0)
+            val = (crunch * 0.65 + tone1 * 0.35 + tone2 * 0.25) * env
+            samples.append(int(max(-1.0, min(1.0, val)) * 32767.0))
+        with wave.open(str(eat_path), 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(struct.pack(f'<{len(samples)}h', *samples))
 
-    p2 = assets / 'shadow.png'
-    if not p2.exists():
-        im = Image.new('RGBA', (96, 96))
-        d = ImageDraw.Draw(im)
-        d.ellipse((12, 12, 84, 84), fill=(18, 47, 5, 150))
-        im = im.filter(ImageFilter.GaussianBlur(10))
-        im.save(p2)
+    # 2. Som de bomba (explosão grave e impacto)
+    bomb_path = assets / 'bomb.wav'
+    if not bomb_path.exists() or bomb_path.stat().st_size < 1000:
+        samples = []
+        dur = 0.65
+        total = int(rate * dur)
+        for i in range(total):
+            t = i / rate
+            env = math.exp(-t * 7.5)
+            noise = (random.random() * 2.0 - 1.0) * env
+            sub = math.sin(2.0 * math.pi * max(40.0, 160.0 - t * 180.0) * t) * env
+            val = noise * 0.65 + sub * 0.55
+            samples.append(int(max(-1.0, min(1.0, val)) * 32767.0))
+        with wave.open(str(bomb_path), 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(struct.pack(f'<{len(samples)}h', *samples))
 
-    # Audio assets
-    s1 = assets / 'eat_apple.wav'
-    if not s1.exists():
-        def apple_bite(t, dur):
-            s = 0.0
-            if t < 0.18:
-                env = math.exp(-t * 28.0)
-                noise = (R.random() * 2 - 1) * 0.7
-                click = math.sin(2 * math.pi * (800 - t * 2500) * t) * 0.5
-                body = math.sin(2 * math.pi * 260 * t) * 0.3
-                s += env * (noise + click + body)
-            if t >= 0.10:
-                t2 = t - 0.10
-                env2 = math.exp(-t2 * 22.0)
-                noise2 = (R.random() * 2 - 1) * 0.8
-                click2 = math.sin(2 * math.pi * (1100 - t2 * 3200) * t2) * 0.6
-                body2 = math.sin(2 * math.pi * 320 * t2) * 0.4
-                s += env2 * (noise2 + click2 + body2)
-            return s * 0.85
-        generate_sfx(s1, 44100, 0.42, apple_bite)
+    # 3. Som de vitória (fanfarra brilhante de meta atingida)
+    vic_path = assets / 'victory.wav'
+    if not vic_path.exists() or vic_path.stat().st_size < 1000:
+        samples = []
+        dur = 1.15
+        total = int(rate * dur)
+        freqs = [(0.0, 523.25), (0.18, 659.25), (0.36, 783.99), (0.55, 1046.5)]
+        for i in range(total):
+            t = i / rate
+            val = 0.0
+            for start_t, f in freqs:
+                if t >= start_t:
+                    note_t = t - start_t
+                    env = math.exp(-note_t * 5.0)
+                    val += math.sin(2.0 * math.pi * f * note_t) * env * 0.32
+                    val += math.sin(2.0 * math.pi * f * 2.0 * note_t) * env * 0.10
+            samples.append(int(max(-1.0, min(1.0, val)) * 32767.0))
+        with wave.open(str(vic_path), 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(struct.pack(f'<{len(samples)}h', *samples))
 
-    s2 = assets / 'bomb.wav'
-    if not s2.exists():
-        def bomb_explosion(t, dur):
-            env = math.exp(-t * 4.5)
-            bass = math.sin(2 * math.pi * (110 * math.exp(-t * 8.0) + 38) * t) * 0.7
-            noise = (R.random() * 2 - 1) * math.exp(-t * 6.0) * 0.6
-            sub = math.sin(2 * math.pi * 45 * t) * 0.4 * math.exp(-t * 3.0)
-            return env * (bass + noise + sub) * 0.9
-        generate_sfx(s2, 44100, 0.9, bomb_explosion)
-
-    s3 = assets / 'victory.wav'
-    if not s3.exists():
-        def victory_chime(t, dur):
-            notes = [523.25, 659.25, 783.99, 1046.50]
-            s = 0.0
-            for idx, freq in enumerate(notes):
-                start = idx * 0.12
-                if t >= start:
-                    dt = t - start
-                    env = math.exp(-dt * 4.0)
-                    tone = math.sin(2 * math.pi * freq * dt) + 0.3 * math.sin(2 * math.pi * freq * 2 * dt)
-                    s += env * tone * 0.25
-            return s * 0.9
-        generate_sfx(s3, 44100, 1.2, victory_chime)
-
-    return str(p), str(p2)
+generate_sfx()
 
 def build_garden():
-    grass, shadow = prepare_assets()
-    Entity(model='plane', scale=80, texture=Texture(Path(grass)), texture_scale=(12, 12), color=color.white, y=-0.08)
-    decorative = Entity()
+    ground = Entity(
+        model='plane',
+        scale=(18, 1, 24),
+        color=color.rgb32(95, 175, 45),
+        position=(0, 0, 0),
+        shader=basic_lighting_shader
+    )
+    grass_tex = ROOT / 'assets' / 'grass.png'
+    if grass_tex.exists():
+        ground.texture = Texture(grass_tex)
+        ground.texture_scale = (6, 8)
 
-    def part(**kw):
-        return Entity(parent=decorative, shader=basic_lighting_shader, **kw)
+    # Cerca de madeira rústica e pedras decorativas
+    for z in (-10.5, 10.5):
+        for x in range(-8, 9, 2):
+            Entity(model='cube', scale=(.25, 1.1, .25), position=(x, .55, z), color=color.rgb32(140, 95, 55), shader=basic_lighting_shader)
+        Entity(model='cube', scale=(17, .16, .12), position=(0, .85, z), color=color.rgb32(120, 80, 45), shader=basic_lighting_shader)
+        Entity(model='cube', scale=(17, .16, .12), position=(0, .45, z), color=color.rgb32(120, 80, 45), shader=basic_lighting_shader)
 
-    def flower(x, z, height, col):
-        part(model='cube', position=(x, height / 2, z), scale=(0.045, height, 0.045), color=color.rgb32(42, 104, 19))
-        for side in (-1, 1):
-            part(model='sphere', position=(x + side * 0.22, height * 0.48, z), scale=(0.65, 0.09, 0.25), rotation_z=side * 25, color=color.rgb32(47, 143, 24))
-        for k in range(7):
-            a = k * math.tau / 7
-            part(model='sphere', position=(x + 0.23 * math.cos(a), height, z + 0.23 * math.sin(a)), scale=(0.39, 0.14, 0.3), rotation_y=-a * 180 / math.pi, color=col)
-        part(model='sphere', position=(x, height + 0.07, z), scale=(0.25, 0.12, 0.25), color=color.rgb32(255, 185, 25))
-        Entity(model='quad', texture=Texture(Path(shadow)), rotation_x=90, position=(x + 0.18, -0.065, z + 0.15), scale=1.35, color=color.white)
+    for x in (-8.5, 8.5):
+        for z in range(-10, 11, 2):
+            Entity(model='cube', scale=(.25, 1.1, .25), position=(x, .55, z), color=color.rgb32(140, 95, 55), shader=basic_lighting_shader)
+        Entity(model='cube', scale=(.12, .16, 21), position=(x, .85, 0), color=color.rgb32(120, 80, 45), shader=basic_lighting_shader)
+        Entity(model='cube', scale=(.12, .16, 21), position=(x, .45, 0), color=color.rgb32(120, 80, 45), shader=basic_lighting_shader)
 
-    palette = [color.rgb32(255, 80, 112), color.rgb32(255, 207, 38), color.rgb32(110, 49, 224), color.rgb32(255, 242, 196)]
-    for i in range(36):
-        a = R.random() * math.tau
-        r = R.uniform(5.5, 11.0)
-        flower(math.cos(a) * r, math.sin(a) * r, R.uniform(0.55, 1.5), palette[i % 4])
+    # Flores e cogumelos coloridos no jardim
+    flower_colors = [
+        color.rgb32(255, 105, 180),
+        color.rgb32(255, 215, 0),
+        color.rgb32(255, 69, 0),
+        color.rgb32(138, 43, 226),
+        color.rgb32(0, 191, 255)
+    ]
+    random.seed(42)
+    for _ in range(40):
+        fx = random.uniform(-7.5, 7.5)
+        fz = random.uniform(-9.5, 9.5)
+        if abs(fx) < 2.0 and abs(fz) < 2.0:
+            continue
+        stem = Entity(model='cylinder', scale=(.05, .45, .05), position=(fx, .22, fz), color=color.rgb32(40, 140, 30))
+        Entity(parent=stem, model='sphere', scale=(5.0, .4, 5.0), position=(0, .48, 0), color=random.choice(flower_colors))
+        Entity(parent=stem, model='sphere', scale=(2.0, .8, 2.0), position=(0, .52, 0), color=color.yellow)
 
-    for i in range(65):
-        x, z = R.uniform(-10, 10), R.uniform(-10, 10)
-        part(model='sphere', position=(x, 0.065, z), scale=(0.15, 0.13, 0.15), color=R.choice([color.red, color.gold, color.azure, color.lime]))
-        part(model='cube', position=(x, 0.16, z), scale=(0.025, 0.08, 0.025), color=color.rgb32(49, 94, 12))
-
-    decorative.combine(auto_destroy=True)
+    # Pedras estilizadas no contorno
+    for _ in range(16):
+        rx = random.choice([-7.8, 7.8]) + random.uniform(-.4, .4)
+        rz = random.uniform(-9.0, 9.0)
+        s = random.uniform(.5, 1.1)
+        Entity(model='sphere', scale=(s*1.2, s*.7, s), position=(rx, .3, rz), color=color.rgb32(135, 145, 140), shader=basic_lighting_shader)
 
 class TubeSnake:
-    def __init__(self):
-        self.rings = 240
-        self.sides = 12
+    """Malha 3D contínua que acompanha a trajetória percorrida pelo jogador."""
+    def __init__(self, rings=200, sides=12):
+        self.rings = rings
+        self.sides = sides
         self.triangles = []
         for i in range(self.rings - 1):
             for k in range(self.sides):
@@ -143,64 +139,83 @@ class TubeSnake:
                 c = a + self.sides
                 d = b + self.sides
                 self.triangles.extend([(a, c, b), (b, c, d)])
-        self.mesh = Mesh(vertices=[], triangles=[], static=False)
-        self.entity = Entity(model=self.mesh, double_sided=True, color=color.white)
+        self.mesh = Mesh(vertices=[], triangles=[], colors=[], static=False)
+        self.entity = Entity(model=self.mesh, double_sided=True, shader=basic_lighting_shader)
 
-    @staticmethod
-    def point(a, progress=0.0):
-        # Curva multi-harmônica 3D contínua, suave e orgânica.
-        # Nunca colide com ela mesma: separação vertical suave nos cruzamentos!
-        # À medida que come maçãs, o raio expande e preenche a tela quase inteira!
-        reach = 1.0 + progress * 0.22
-        x = reach * (4.35 * math.sin(a) + 0.45 * math.sin(3 * a))
-        z = reach * (3.45 * math.sin(2 * a) + 0.35 * math.cos(a))
-        y = 0.38 + 0.15 * math.sin(2.5 * a)
-        return Vec3(x, y, z)
+    def update_mesh(self, points, progress=0.0, elapsed=0.0):
+        """Reconstrói os anéis tubulares da cobra ao longo dos pontos da espinha."""
+        if len(points) < 2:
+            return
 
-    def update(self, angle, progress, elapsed=0.0):
-        # O corpo cresce exponencialmente com as maçãs e chega a preencher quase toda a tela (até 15.5 radianos)
-        length = 2.0 + progress * 13.5
-        base_radius = 0.35 + progress * 0.10
+        base_radius = 0.36 + progress * 0.12
         verts = []
         cols = []
 
-        for i in range(self.rings):
-            t = i / (self.rings - 1)
-            a = angle - t * length
-            p = self.point(a, progress)
+        back_color = color.rgb32(24, 74, 255)
+        belly_color = color.rgb32(107, 228, 197)
 
-            eps = 0.02
-            p_next = self.point(a + eps, progress)
-            tangent = (p_next - p).normalized()
-            side = Vec3(tangent.z, 0, -tangent.x).normalized()
+        n_pts = len(points)
+
+        for i in range(self.rings):
+            # Interpola ponto ao longo da lista de pontos
+            idx_float = (i / (self.rings - 1)) * (n_pts - 1)
+            idx0 = int(idx_float)
+            idx1 = min(n_pts - 1, idx0 + 1)
+            frac = idx_float - idx0
+
+            p0 = points[idx0]
+            p1 = points[idx1]
+            p = Vec3(
+                p0[0] + frac * (p1[0] - p0[0]),
+                p0[1] + frac * (p1[1] - p0[1]),
+                p0[2] + frac * (p1[2] - p0[2])
+            )
+
+            # Vetor tangente para orientar o anel
+            if idx0 < n_pts - 1:
+                tangent = Vec3(p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2])
+            else:
+                tangent = Vec3(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2])
+
+            if tangent.length() < 0.0001:
+                tangent = Vec3(0, 0, 1)
+            tangent = tangent.normalized()
+
+            # Base ortonormal
+            side = Vec3(tangent.z, 0, -tangent.x)
+            if side.length() < 0.001:
+                side = Vec3(1, 0, 0)
+            side = side.normalized()
             up = Vec3.cross(tangent, side).normalized()
 
-            # Movimento ondulatório lateral da coluna da cobra
-            wave_val = math.sin(a * 4.0 - elapsed * 2.8) * 0.10 * (1.0 - t * 0.35)
-            p = p + side * wave_val
+            # Conicidade na cauda e transição na cabeça
+            t = i / (self.rings - 1)
+            if t > 0.85:
+                taper = max(0.10, 1.0 - ((t - 0.85) / 0.15) ** 1.3)
+            elif t < 0.06:
+                taper = 0.82 + 0.18 * (t / 0.06)
+            else:
+                taper = 1.0
 
-            # Conicidade suave na cauda e transição na cabeça
-            taper = 1.0
-            if t > 0.82:
-                taper = max(0.12, 1.0 - 0.88 * ((t - 0.82) / 0.18) ** 1.3)
-            elif t < 0.08:
-                taper = 0.84 + 0.16 * (t / 0.08)
             radius = base_radius * taper
+
+            # Micro-ondulação de escamas para sensação orgânica de movimento
+            wave_subtle = math.sin(t * 18.0 - elapsed * 8.0) * 0.02 * (1.0 - t * 0.4)
+            p = p + side * wave_subtle
 
             for k in range(self.sides):
                 theta = k * math.tau / self.sides
                 cos_t = math.cos(theta)
                 sin_t = math.sin(theta)
+
                 offset = side * (cos_t * radius) + up * (sin_t * radius)
                 verts.append(p + offset)
 
-                # Barriga verde-clara / turquesa original
-                if sin_t < -0.22:
-                    c = color.rgb32(104, 224, 185)
+                # Dorso azul superior e ventre verde-água inferior
+                if sin_t < -0.15:
+                    cols.append(belly_color)
                 else:
-                    light = 0.65 + 0.35 * max(0.0, sin_t)
-                    c = color.rgba(0.035 * light, 0.20 * light, 1.0 * light, 1.0)
-                cols.append(c)
+                    cols.append(back_color)
 
         self.mesh.vertices = verts
         self.mesh.triangles = self.triangles
